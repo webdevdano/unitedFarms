@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Green Valley Farm",
+    "city": "Chico",
+    "zip": "95928",
+    "address": "123 Orchard Rd, Chico, CA",
+    "contact": "(530) 555-1234"
+  },
+  {
+    "id": 2,
+    "name": "Central Harvest",
+    "city": "Modesto",
+    "zip": "95350",
+    "address": "456 Farm Lane, Modesto, CA",
+    "contact": "(209) 555-5678"
+  },
+  {
+    "id": 3,
+    "name": "Sunrise Acres",
+    "city": "Davis",
+    "zip": "95616",
+    "address": "789 Sunrise Blvd, Davis, CA",
+    "contact": "(530) 555-9012"
+  }
+]

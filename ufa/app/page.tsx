@@ -1,59 +1,50 @@
 "use client";
+"use client";
 import { useState } from "react";
 
-// Sample farm data
-const farmsData = [
-  {
-    id: 1,
-    name: "Green Valley Farm",
-    city: "Chico",
-    zip: "95928",
-    address: "123 Orchard Rd, Chico, CA",
-    contact: "(530) 555-1234"
-  },
-  {
-    id: 2,
-    name: "Central Harvest",
-    city: "Modesto",
-    zip: "95350",
-    address: "456 Farm Lane, Modesto, CA",
-    contact: "(209) 555-5678"
-  },
-  {
-    id: 3,
-    name: "Sunrise Acres",
-    city: "Davis",
-    zip: "95616",
-    address: "789 Sunrise Blvd, Davis, CA",
-    contact: "(530) 555-9012"
-  }
-];
+type Farm = {
+  MarketName: string;
+  Address: string;
+  City: string;
+  Zip: string;
+  Phone?: string;
+};
 
 export default function Home() {
-  // State for search input and filtered results
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState(farmsData);
+  // State for search input, results, loading, and error
+  const [search, setSearch] = useState<string>("");
+  const [results, setResults] = useState<Farm[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   // Handle search input change
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
-  // Handle form submit to filter farms
-  const handleSubmit = (e) => {
+  // Handle form submit to fetch farms from API
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const query = search.trim().toLowerCase();
-    if (!query) {
-      setResults(farmsData);
-      return;
-    }
-    setResults(
-      farmsData.filter(
+    setLoading(true);
+    setError("");
+    try {
+      // Fetch all farms from the API
+      const res = await fetch("https://www.usdalocalfoodportal.com/api/onfarmmarket/?apikey=DOizpwByEK&x=-84&y=42&radius=30");
+      if (!res.ok) throw new Error("API request failed");
+      const data: Farm[] = await res.json();
+      // Filter results by city or zip code
+      const query = search.trim().toLowerCase();
+      const filtered = data.filter(
         (farm) =>
-          farm.city.toLowerCase().includes(query) ||
-          farm.zip.includes(query)
-      )
-    );
+          (farm.City && farm.City.toLowerCase().includes(query)) ||
+          (farm.Zip && farm.Zip.includes(query))
+      );
+      setResults(filtered);
+    } catch (err) {
+      setError("Failed to fetch farm data.");
+      setResults([]);
+    }
+    setLoading(false);
   };
 
   return (
@@ -92,18 +83,22 @@ export default function Home() {
           </form>
           {/* Results list */}
           <div className="w-full">
-            {results.length === 0 ? (
+            {loading ? (
+              <div className="bg-white shadow rounded p-6 text-center text-gray-500">Loading...</div>
+            ) : error ? (
+              <div className="bg-white shadow rounded p-6 text-center text-red-500">{error}</div>
+            ) : results.length === 0 ? (
               <div className="bg-white shadow rounded p-6 text-center text-gray-500">
                 No farms found. Please search to see results.
               </div>
             ) : (
               <ul className="space-y-4">
                 {results.map((farm) => (
-                  <li key={farm.id} className="bg-green-50 border border-green-200 rounded p-4 shadow">
-                    <h3 className="text-xl font-semibold text-green-700">{farm.name}</h3>
-                    <p className="text-gray-700">{farm.address}</p>
-                    <p className="text-gray-600">City: {farm.city} | Zip: {farm.zip}</p>
-                    <p className="text-gray-600">Contact: {farm.contact}</p>
+                  <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                    <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
+                    <p className="text-gray-700">{farm.Address}</p>
+                    <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
+                    <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
                   </li>
                 ))}
               </ul>

@@ -1,5 +1,4 @@
 "use client";
-"use client";
 import { useState } from "react";
 
 type Farm = {
@@ -13,6 +12,7 @@ type Farm = {
 export default function Home() {
   // State for search input, results, loading, and error
   const [search, setSearch] = useState<string>("");
+  const [radius, setRadius] = useState<string>("30");
   const [results, setResults] = useState<Farm[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -22,24 +22,48 @@ export default function Home() {
     setSearch(e.target.value);
   };
 
+  // Handle radius input change
+  const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRadius(e.target.value);
+  };
+
   // Handle form submit to fetch farms from API
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      // Fetch all farms from the API
-      const res = await fetch("https://www.usdalocalfoodportal.com/api/onfarmmarket/?apikey=DOizpwByEK&x=-84&y=42&radius=30");
-      if (!res.ok) throw new Error("API request failed");
-      const data: Farm[] = await res.json();
-      // Filter results by city or zip code
-      const query = search.trim().toLowerCase();
-      const filtered = data.filter(
-        (farm) =>
-          (farm.City && farm.City.toLowerCase().includes(query)) ||
-          (farm.Zip && farm.Zip.includes(query))
-      );
-      setResults(filtered);
+      let url = "/api/farms";
+      const input = search.trim();
+      // If input is a 5-digit zip code, search by zip and user radius
+      if (/^\d{5}$/.test(input)) {
+        url += `?zip=${encodeURIComponent(input)}&radius=${encodeURIComponent(radius)}`;
+      } else {
+        // Otherwise, try to split city and state (e.g., "Chico, CA")
+        const parts = input.split(",");
+        if (parts.length === 2) {
+          const city = parts[0].trim();
+          const state = parts[1].trim();
+          url += `?city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}`;
+        } else {
+          setError("Please enter a zip code or 'City, State'.");
+          setLoading(false);
+          return;
+        }
+      }
+      const res = await fetch(url);
+      let farms: Farm[] = [];
+      if (!res.ok) {
+        // Try to get error message from backend
+        const errorJson = await res.json();
+        setError(errorJson.error || "API request failed");
+        setResults([]);
+      } else {
+        const data = await res.json();
+        console.log("API response:", data);
+        farms = Array.isArray(data) ? data : [];
+        setResults(farms);
+      }
     } catch (err) {
       setError("Failed to fetch farm data.");
       setResults([]);
@@ -66,20 +90,34 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-green-800 mb-2 text-center">Find Local Farms Near You</h2>
           <p className="mb-6 text-amber-900 text-center">Enter your city or zip code to discover nearby farms and fresh produce.</p>
           {/* Search form */}
-          <form className="flex w-full max-w-md mx-auto mb-8" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={search}
-              onChange={handleChange}
-              placeholder="Search by city or zip code..."
-              className="flex-1 px-4 py-2 border text-green-400 border-green-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700"
-            >
-              Search
-            </button>
+          <form className="flex flex-col w-full max-w-md mx-auto mb-8 gap-2" onSubmit={handleSubmit}>
+            <div className="flex">
+              <input
+                type="text"
+                value={search}
+                onChange={handleChange}
+                placeholder="Search by city or zip code..."
+                className="flex-1 px-4 py-2 border text-green-400 border-green-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700"
+              >
+                Search
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="radius" className="text-green-700 font-medium">Radius (miles):</label>
+              <input
+                id="radius"
+                type="number"
+                min="1"
+                max="100"
+                value={radius}
+                onChange={handleRadiusChange}
+                className="w-20 px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
           </form>
           {/* Results list */}
           <div className="w-full">

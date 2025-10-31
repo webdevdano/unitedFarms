@@ -8,6 +8,7 @@ export async function GET() {
     const farms = await Farm.find({}).sort({ createdAt: -1 });
     // Map to match the expected format
     const formattedFarms = farms.map(farm => ({
+      _id: farm._id.toString(),
       MarketName: farm.name,
       Address: farm.address,
       City: farm.city,

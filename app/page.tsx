@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 type Farm = {
+  _id?: string;
   MarketName: string;
   Address: string;
   City: string;
@@ -10,6 +12,7 @@ type Farm = {
 };
 
 export default function Home() {
+  const { data: session } = useSession();
   // State for search input, results, loading, and error
   const [search, setSearch] = useState<string>("");
   const [radius, setRadius] = useState<string>("30");
@@ -101,6 +104,22 @@ export default function Home() {
               <li><a href="#" className="hover:text-amber-200">Home</a></li>
               <li><a href="#" className="hover:text-amber-200">About</a></li>
               <li><a href="#" className="hover:text-amber-200">Contact</a></li>
+              {session ? (
+                <li>
+                  <button
+                    onClick={() => signOut()}
+                    className="hover:text-amber-200"
+                  >
+                    Logout
+                  </button>
+                </li>
+              ) : (
+                <li>
+                  <a href="/login" className="hover:text-amber-200">
+                    Login
+                  </a>
+                </li>
+              )}
             </ul>
           </nav>
         </div>
@@ -177,11 +196,21 @@ export default function Home() {
             ) : (
               <ul className="space-y-4">
                 {userFarms.map((farm) => (
-                  <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
-                    <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
-                    <p className="text-gray-700">{farm.Address}</p>
-                    <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
-                    <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                  <li key={farm._id || farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
+                        <p className="text-gray-700">{farm.Address}</p>
+                        <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
+                        <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                      </div>
+                      <a
+                        href={`/edit-farm/${farm._id}`}
+                        className="ml-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      >
+                        Edit
+                      </a>
+                    </div>
                   </li>
                 ))}
               </ul>

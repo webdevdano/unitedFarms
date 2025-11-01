@@ -9,12 +9,14 @@ export default function AddFarmPage() {
     state: "",
     zip: "",
     phone: "",
+    farmType: "Other",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -34,9 +36,9 @@ export default function AddFarmPage() {
         setError(err.error || "Failed to add farm.");
       } else {
         setSuccess("Farm added successfully!");
-        setForm({ name: "", address: "", city: "", state: "", zip: "", phone: "" });
+        setForm({ name: "", address: "", city: "", state: "", zip: "", phone: "", farmType: "Other", description: "" });
       }
-    } catch (err) {
+    } catch {
       setError("Failed to add farm.");
     }
     setLoading(false);
@@ -51,7 +53,27 @@ export default function AddFarmPage() {
         <input name="city" value={form.city} onChange={handleChange} required placeholder="City" className="w-full text-green-500 border px-3 py-2 rounded" />
         <input name="state" value={form.state} onChange={handleChange} required placeholder="State" className="w-full text-green-500 border px-3 py-2 rounded" />
         <input name="zip" value={form.zip} onChange={handleChange} required placeholder="Zip Code" className="w-full text-green-500 border px-3 py-2 rounded" />
+        <select name="farmType" value={form.farmType} onChange={handleChange} required className="w-full text-green-500 border px-3 py-2 rounded">
+          <option value="Produce">Produce</option>
+          <option value="Beef">Beef</option>
+          <option value="Poultry">Poultry</option>
+          <option value="Dairy">Dairy</option>
+          <option value="All">All</option>
+          <option value="Other">Other</option>
+        </select>
         <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone (optional)" className="w-full text-green-500 border px-3 py-2 rounded" />
+        <textarea 
+          name="description" 
+          value={form.description} 
+          onChange={handleChange} 
+          placeholder="Description (optional, max 1000 characters)" 
+          maxLength={1000}
+          rows={3}
+          className="w-full text-green-500 border px-3 py-2 rounded resize-none"
+        />
+        <div className="text-right text-sm text-gray-500">
+          {form.description.length}/1000 characters
+        </div>
         <button type="submit" disabled={loading} className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
           {loading ? "Adding..." : "Add Farm"}
         </button>

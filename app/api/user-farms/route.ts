@@ -14,10 +14,12 @@ export async function GET() {
       City: farm.city,
       Zip: farm.zip,
       Phone: farm.phone || "",
+      FarmType: farm.farmType,
+      Description: farm.description,
     }));
     return NextResponse.json(formattedFarms);
   } catch (error) {
-    console.error("Error fetching user farms:", error);
-    return NextResponse.json({ error: "Failed to fetch user farms." }, { status: 500 });
+    console.error("Error fetching farms:", error);
+    return NextResponse.json({ error: "Failed to fetch farms." }, { status: 500 });
   }
 }

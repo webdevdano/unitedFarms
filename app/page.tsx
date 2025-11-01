@@ -9,6 +9,8 @@ type Farm = {
   City: string;
   Zip: string;
   Phone?: string;
+  FarmType?: string;
+  Description?: string;
 };
 
 export default function Home() {
@@ -104,6 +106,11 @@ export default function Home() {
               <li><a href="#" className="hover:text-amber-200">Home</a></li>
               <li><a href="#" className="hover:text-amber-200">About</a></li>
               <li><a href="#" className="hover:text-amber-200">Contact</a></li>
+              <li>
+                <a href="/add-farm" className="hover:text-amber-200">
+                  Add Farm
+                </a>
+              </li>
               {session ? (
                 <li>
                   <button
@@ -200,9 +207,13 @@ export default function Home() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
+                        <p className="text-sm text-green-600 font-medium">{farm.FarmType}</p>
                         <p className="text-gray-700">{farm.Address}</p>
                         <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
                         <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                        {farm.Description && (
+                          <p className="text-gray-600 mt-2 italic">{farm.Description}</p>
+                        )}
                       </div>
                       <a
                         href={`/edit-farm/${farm._id}`}

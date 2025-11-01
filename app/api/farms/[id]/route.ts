@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
 import { dbConnect } from "../../../../lib/mongoose";
 import Farm from "../../../../models/Farm";
 
@@ -23,6 +21,8 @@ export async function GET(
       state: farm.state,
       zip: farm.zip,
       phone: farm.phone,
+      farmType: farm.farmType,
+      description: farm.description,
     });
   } catch (error) {
     console.error("Error fetching farm:", error);
@@ -34,30 +34,41 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
-    const { name, address, city, state, zip, phone } = body;
+    const { name, address, city, state, zip, phone, farmType, description } = body;
 
-    if (!name || !address || !city || !state || !zip) {
+    if (!name || !address || !city || !state || !zip || !farmType) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const updatedFarm = await Farm.findByIdAndUpdate(
-      id,
-      { name, address, city, state, zip, phone },
-      { new: true }
-    );
-
-    if (!updatedFarm) {
+    // Check if the farm exists
+    const existingFarm = await Farm.findById(id);
+    if (!existingFarm) {
       return NextResponse.json({ error: "Farm not found" }, { status: 404 });
     }
+
+    // Create update data object, only including non-empty optional fields
+    const updateData: { [key: string]: string } = {
+      name,
+      address,
+      city,
+      state,
+      zip,
+      farmType,
+    };
+
+    if (phone && phone.trim()) updateData.phone = phone.trim();
+    if (description && description.trim()) updateData.description = description.trim();
+
+    // Update the farm
+    await Farm.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
 
     return NextResponse.json({ message: "Farm updated successfully" });
   } catch (error) {

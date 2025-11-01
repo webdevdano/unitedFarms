@@ -7,6 +7,13 @@ const FarmSchema = new Schema({
   state: { type: String, required: true },
   zip: { type: String, required: true },
   phone: { type: String },
+  description: { type: String, maxlength: 1000 },
+  farmType: { 
+    type: String, 
+    required: true, 
+    enum: ['Produce', 'Beef', 'Poultry', 'Dairy', 'All', 'Other'],
+    default: 'Other'
+  },
   createdAt: { type: Date, default: Date.now },
   verified: { type: Boolean, default: false },
 });

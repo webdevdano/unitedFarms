@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 
 const ResultsMap = dynamic(() => import("./components/ResultsMap"), { ssr: false });
+const AddFarmModal = dynamic(() => import("./components/AddFarmModal"), { ssr: false });
 
 type Farm = {
   _id?: string;
@@ -28,6 +29,11 @@ export default function Home() {
   const [error, setError] = useState<string>("");
   const [userFarms, setUserFarms] = useState<Farm[]>([]);
   const [userFarmsLoading, setUserFarmsLoading] = useState<boolean>(true);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const handleFarmAdded = (farm: Farm) => {
+    setUserFarms((prev) => [farm, ...prev]);
+  };
 
   // Fetch user-submitted farms on mount
   useEffect(() => {
@@ -111,11 +117,6 @@ export default function Home() {
               <li><a href="#" className="hover:text-amber-200">Home</a></li>
               <li><a href="#" className="hover:text-amber-200">About</a></li>
               <li><a href="#" className="hover:text-amber-200">Contact</a></li>
-              <li>
-                <a href="/add-farm" className="hover:text-amber-200">
-                  Add Farm
-                </a>
-              </li>
               {session ? (
                 <li>
                   <button
@@ -208,15 +209,24 @@ export default function Home() {
           </div>
         </section>
         {/* User-Submitted Farms Section */}
-        <section className="w-full max-w-5xl bg-white/80 rounded-lg shadow-lg p-8 mt-8">
-          <h2 className="text-3xl font-bold text-green-800 mb-2 text-center">User-Submitted Farms</h2>
-          <p className="mb-6 text-amber-900 text-center">Farms added by our community.</p>
+        <section className="w-full max-w-5xl bg-white/80 rounded-lg shadow-lg p-6 md:p-8 mt-8">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-3xl font-bold text-green-800">User-Submitted Farms</h2>
+            <button
+              onClick={() => setAddOpen(true)}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Add Farm
+            </button>
+          </div>
+          <p className="mt-2 mb-6 text-amber-900">Farms added by our community.</p>
           <div className="w-full">
             {userFarmsLoading ? (
               <div className="bg-white shadow rounded p-6 text-center text-gray-500">Loading user farms...</div>
             ) : userFarms.length === 0 ? (
               <div className="bg-white shadow rounded p-6 text-center text-gray-500">
-                No user-submitted farms yet. <a href="/add-farm" className="text-green-600 hover:underline">Add one here</a>.
+                No user-submitted farms yet.
+                <button onClick={() => setAddOpen(true)} className="ml-1 text-green-600 hover:underline">Add one here</button>.
               </div>
             ) : (
               <ul className="space-y-4">
@@ -247,6 +257,11 @@ export default function Home() {
           </div>
         </section>
       </main>
+      <AddFarmModal
+        open={addOpen}
+        onCloseAction={() => setAddOpen(false)}
+        onAddedAction={(f) => handleFarmAdded(f as Farm)}
+      />
     </div>
   );
 }

@@ -57,6 +57,8 @@ export async function GET(request: Request) {
       Phone?: string;
       FarmType?: string;
       Description?: string;
+      Lat?: number;
+      Lng?: number;
     };
     let placesFormatted: UiFarm[] = [];
 
@@ -79,10 +81,13 @@ export async function GET(request: Request) {
                 formatted_address: string;
                 types?: string[];
                 business_status?: string;
+                geometry?: { location?: { lat: number; lng: number } };
               };
               placesFormatted = (json.results as PlaceResult[]).map((p) => {
                 const addr = p.formatted_address as string;
                 const { city: c, zip: z } = parseCityZip(addr);
+                const lat = p.geometry?.location?.lat;
+                const lng = p.geometry?.location?.lng;
                 return {
                   MarketName: p.name,
                   Address: addr,
@@ -91,6 +96,8 @@ export async function GET(request: Request) {
                   Phone: "", // Details API needed for phone
                   FarmType: "Other",
                   Description: (p.types || []).join(", ") || p.business_status || "",
+                  Lat: typeof lat === 'number' ? lat : undefined,
+                  Lng: typeof lng === 'number' ? lng : undefined,
                 };
               });
             }

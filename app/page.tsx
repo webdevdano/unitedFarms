@@ -1,6 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
+import dynamic from "next/dynamic";
+
+const ResultsMap = dynamic(() => import("./components/ResultsMap"), { ssr: false });
 
 type Farm = {
   _id?: string;
@@ -11,6 +14,8 @@ type Farm = {
   Phone?: string;
   FarmType?: string;
   Description?: string;
+  Lat?: number;
+  Lng?: number;
 };
 
 export default function Home() {
@@ -132,65 +137,78 @@ export default function Home() {
         </div>
       </header>
       <main className="flex flex-col items-center justify-center py-16 px-4">
-        <section className="w-full max-w-xl bg-white/80 rounded-lg shadow-lg p-8 mt-8">
+        <section className="w-full max-w-5xl bg-white/80 rounded-lg shadow-lg p-6 md:p-8 mt-8">
           <h2 className="text-3xl font-bold text-green-800 mb-2 text-center">Find Local Farms Near You</h2>
           <p className="mb-6 text-amber-900 text-center">Enter your city or zip code to discover nearby farms and fresh produce.</p>
-          {/* Search form */}
-          <form className="flex flex-col w-full max-w-md mx-auto mb-8 gap-2" onSubmit={handleSubmit}>
-            <div className="flex">
-              <input
-                type="text"
-                value={search}
-                onChange={handleChange}
-                placeholder="Search by city or zip code..."
-                className="flex-1 px-4 py-2 border text-green-400 border-green-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700"
-              >
-                Search
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <label htmlFor="radius" className="text-green-700 font-medium">Radius (miles):</label>
-              <input
-                id="radius"
-                type="number"
-                min="1"
-                max="100"
-                value={radius}
-                onChange={handleRadiusChange}
-                className="w-20 px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
-              />
-            </div>
-          </form>
-          {/* Results list */}
-          <div className="w-full">
-            {loading ? (
-              <div className="bg-white shadow rounded p-6 text-center text-gray-500">Loading...</div>
-            ) : error ? (
-              <div className="bg-white shadow rounded p-6 text-center text-red-500">{error}</div>
-            ) : results.length === 0 ? (
-              <div className="bg-white shadow rounded p-6 text-center text-gray-500">
-                No farms found. Please search to see results.
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            {/* Left: Form + Results */}
+            <div>
+              <form className="flex flex-col w-full mb-6 gap-2" onSubmit={handleSubmit}>
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={handleChange}
+                    placeholder="Search by city or zip code..."
+                    className="flex-1 px-4 py-2 border text-green-400 border-green-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700"
+                  >
+                    Search
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="radius" className="text-green-700 font-medium">Radius (miles):</label>
+                  <input
+                    id="radius"
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={radius}
+                    onChange={handleRadiusChange}
+                    className="w-20 px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
+                  />
+                </div>
+              </form>
+              <div className="w-full">
+                {loading ? (
+                  <div className="bg-white shadow rounded p-6 text-center text-gray-500">Loading...</div>
+                ) : error ? (
+                  <div className="bg-white shadow rounded p-6 text-center text-red-500">{error}</div>
+                ) : results.length === 0 ? (
+                  <div className="bg-white shadow rounded p-6 text-center text-gray-500">
+                    No farms found. Please search to see results.
+                  </div>
+                ) : (
+                  <ul className="space-y-4">
+                    {results.map((farm) => (
+                      <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                        <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
+                        <p className="text-gray-700">{farm.Address}</p>
+                        <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
+                        <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ) : (
-              <ul className="space-y-4">
-                {results.map((farm) => (
-                  <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
-                    <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
-                    <p className="text-gray-700">{farm.Address}</p>
-                    <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
-                    <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
+            </div>
+            {/* Right: Map */}
+            <div className="h-96 md:h-full min-h-96">
+              <ResultsMap
+                markers={useMemo(() => (
+                  results
+                    .filter((f) => typeof f.Lat === 'number' && typeof f.Lng === 'number')
+                    .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName }))
+                ), [results])}
+              />
+            </div>
           </div>
         </section>
         {/* User-Submitted Farms Section */}
-        <section className="w-full max-w-4xl bg-white/80 rounded-lg shadow-lg p-8 mt-8">
+        <section className="w-full max-w-5xl bg-white/80 rounded-lg shadow-lg p-8 mt-8">
           <h2 className="text-3xl font-bold text-green-800 mb-2 text-center">User-Submitted Farms</h2>
           <p className="mb-6 text-amber-900 text-center">Farms added by our community.</p>
           <div className="w-full">

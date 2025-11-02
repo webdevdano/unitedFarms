@@ -1,5 +1,5 @@
 "use client";
-import { GoogleMap, LoadScript, MarkerF } from "@react-google-maps/api";
+import { GoogleMap, MarkerF, useJsApiLoader } from "@react-google-maps/api";
 import { useMemo } from "react";
 
 export type MapMarker = {
@@ -27,22 +27,40 @@ export default function ResultsMap({ markers, fallbackCenter = { lat: 39.8283, l
 
   const containerStyle: React.CSSProperties = { width: "100%", height: "100%", borderRadius: 8 };
 
-  // Don't render map if no API key present
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: apiKey || "",
+    libraries: [],
+  });
+
   if (!apiKey) {
     return (
       <div className={`w-full h-full bg-gray-100 text-gray-600 flex items-center justify-center rounded ${className || ""}`}>
-        Google Maps not configured
+        Google Maps not configured (missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className={`w-full h-full bg-red-50 text-red-700 flex items-center justify-center rounded ${className || ""}`}>
+        Failed to load Google Maps
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className={`w-full h-full bg-gray-100 text-gray-600 flex items-center justify-center rounded ${className || ""}`}>
+        Loading map...
       </div>
     );
   }
 
   return (
-    <LoadScript googleMapsApiKey={apiKey} libraries={[]}>
-      <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={markers.length ? 11 : 4} options={{ streetViewControl: false, mapTypeControl: false }}>
-        {markers.map((m, idx) => (
-          <MarkerF key={`${m.lat}-${m.lng}-${idx}`} position={{ lat: m.lat, lng: m.lng }} title={m.title} />
-        ))}
-      </GoogleMap>
-    </LoadScript>
+    <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={markers.length ? 11 : 4} options={{ streetViewControl: false, mapTypeControl: false }}>
+      {markers.map((m, idx) => (
+        <MarkerF key={`${m.lat}-${m.lng}-${idx}`} position={{ lat: m.lat, lng: m.lng }} title={m.title} />
+      ))}
+    </GoogleMap>
   );
 }

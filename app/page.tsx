@@ -25,6 +25,7 @@ export default function Home() {
   const [search, setSearch] = useState<string>("");
   const [radius, setRadius] = useState<string>("30");
   const [results, setResults] = useState<Farm[]>([]);
+  const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [userFarms, setUserFarms] = useState<Farm[]>([]);
@@ -52,6 +53,18 @@ export default function Home() {
     };
     fetchUserFarms();
   }, []);
+
+  // Reset pagination when results change
+  useEffect(() => {
+    setPage(1);
+  }, [results]);
+
+  const pageSize = 5;
+  const totalPages = Math.max(1, Math.ceil(results.length / pageSize));
+  const pageResults = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return results.slice(start, start + pageSize);
+  }, [results, page]);
 
   // Handle search input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,21 +196,42 @@ export default function Home() {
                     No farms found. Please search to see results.
                   </div>
                 ) : (
-                  <ul className="space-y-4">
-                    {results.map((farm) => (
-                      <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
-                        <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
-                        <p className="text-gray-700">{farm.Address}</p>
-                        <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
-                        <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="space-y-4">
+                      {pageResults.map((farm) => (
+                        <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                          <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
+                          <p className="text-gray-700">{farm.Address}</p>
+                          <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
+                          <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        className={`px-3 py-1 rounded border ${page <= 1 ? "text-gray-400 border-gray-200" : "text-green-700 border-green-300 hover:bg-green-50"}`}
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page >= totalPages}
+                        className={`px-3 py-1 rounded border ${page >= totalPages ? "text-gray-400 border-gray-200" : "text-green-700 border-green-300 hover:bg-green-50"}`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
             {/* Right: Map */}
-            <div className="h-96 md:h-full min-h-96">
+            <div className="h-96">
               <ResultsMap
                 markers={useMemo(() => (
                   results

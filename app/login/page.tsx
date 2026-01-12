@@ -37,7 +37,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           required
-          className="w-full border px-3 py-2 rounded"
+          className="w-full border text-green-400 px-3 py-2 rounded"
         />
         <input
           type="password"
@@ -45,7 +45,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           required
-          className="w-full border px-3 py-2 rounded"
+          className="w-full border text-green-400 px-3 py-2 rounded"
         />
         <button
           type="submit"

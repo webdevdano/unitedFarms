@@ -47,6 +47,20 @@ npm run dev
 npm test
 ```
 
+### Cypress (E2E)
+
+Run end-to-end tests (starts `next dev --webpack` automatically):
+
+```bash
+npm run e2e
+```
+
+Or open the interactive runner:
+
+```bash
+npm run cypress:open
+```
+
 ### Docker
 
 ```bash

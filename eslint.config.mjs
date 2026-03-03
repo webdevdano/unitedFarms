@@ -13,6 +13,22 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["cypress/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: {
+        cy: "readonly",
+        Cypress: "readonly",
+        expect: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        before: "readonly",
+        beforeEach: "readonly",
+        after: "readonly",
+        afterEach: "readonly",
+      },
+    },
+  },
 ]);
 
 export default eslintConfig;

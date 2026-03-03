@@ -2,6 +2,14 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment
+
+Copy the example env file and adjust as needed:
+
+```bash
+cp .env.example .env
+```
+
 First, run the development server:
 
 ```bash
@@ -15,6 +23,35 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Optional: run the Express backend
+
+This repo includes a separate Node/Express API (in `server/`) that can serve the same `/api/*` endpoints.
+
+- Start Express + Next together:
+
+```bash
+USE_EXPRESS_BACKEND=1 npm run dev:all
+```
+
+- Or start them separately:
+
+```bash
+npm run server:dev
+npm run dev
+```
+
+### Tests
+
+```bash
+npm test
+```
+
+### Docker
+
+```bash
+docker compose up --build
+```
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

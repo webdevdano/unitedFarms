@@ -26,7 +26,6 @@ export function createApp() {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    // eslint-disable-next-line no-console
     console.error("[express] unhandled error:", err);
     res.status(500).json({ error: "Internal server error" });
   });

@@ -1,63 +1,58 @@
 "use client";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchFarms, fetchUserFarms, type UiFarm } from "../lib/api/farms";
+import { useFarmSearchStore } from "../lib/store/useFarmSearchStore";
 
 const ResultsMap = dynamic(() => import("./components/ResultsMap"), { ssr: false });
 const AddFarmModal = dynamic(() => import("./components/AddFarmModal"), { ssr: false });
 
-type Farm = {
-  _id?: string;
-  MarketName: string;
-  Address: string;
-  City: string;
-  Zip: string;
-  Phone?: string;
-  FarmType?: string;
-  Description?: string;
-  Lat?: number;
-  Lng?: number;
-};
+type Farm = UiFarm;
 
 export default function Home() {
   const { data: session } = useSession();
-  // State for search input, results, loading, and error
-  const [search, setSearch] = useState<string>("");
-  const [radius, setRadius] = useState<string>("30");
-  const [results, setResults] = useState<Farm[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [userFarms, setUserFarms] = useState<Farm[]>([]);
-  const [userFarmsLoading, setUserFarmsLoading] = useState<boolean>(true);
+  const queryClient = useQueryClient();
+
+  const searchInput = useFarmSearchStore((s) => s.searchInput);
+  const radiusInput = useFarmSearchStore((s) => s.radiusInput);
+  const submitted = useFarmSearchStore((s) => s.submitted);
+  const page = useFarmSearchStore((s) => s.page);
+  const validationError = useFarmSearchStore((s) => s.validationError);
+  const setSearchInput = useFarmSearchStore((s) => s.setSearchInput);
+  const setRadiusInput = useFarmSearchStore((s) => s.setRadiusInput);
+  const setPage = useFarmSearchStore((s) => s.setPage);
+  const submit = useFarmSearchStore((s) => s.submit);
+
   const [addOpen, setAddOpen] = useState(false);
 
   const handleFarmAdded = (farm: Farm) => {
-    setUserFarms((prev) => [farm, ...prev]);
+    queryClient.setQueryData<Farm[]>(["user-farms"], (prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      return [farm, ...list];
+    });
   };
 
-  // Fetch user-submitted farms on mount
-  useEffect(() => {
-    const fetchUserFarms = async () => {
-      try {
-        const res = await fetch("/api/user-farms");
-        if (res.ok) {
-          const data = await res.json();
-          setUserFarms(data);
-        }
-      } catch {
-        console.error("Failed to fetch user farms");
-      } finally {
-        setUserFarmsLoading(false);
-      }
-    };
-    fetchUserFarms();
-  }, []);
+  const userFarmsQuery = useQuery({
+    queryKey: ["user-farms"],
+    queryFn: fetchUserFarms,
+  });
 
-  // Reset pagination when results change
-  useEffect(() => {
-    setPage(1);
-  }, [results]);
+  const farmsQuery = useQuery({
+    queryKey: ["farms-search", submitted],
+    queryFn: () => {
+      if (!submitted) return Promise.resolve([] as Farm[]);
+      return fetchFarms(submitted);
+    },
+    enabled: !!submitted,
+  });
+
+  const results = useMemo(() => farmsQuery.data ?? [], [farmsQuery.data]);
+  const loading = farmsQuery.isFetching;
+  const error = validationError || (farmsQuery.error instanceof Error ? farmsQuery.error.message : "");
+  const userFarms = userFarmsQuery.data ?? [];
+  const userFarmsLoading = userFarmsQuery.isLoading;
 
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(results.length / pageSize));
@@ -68,56 +63,22 @@ export default function Home() {
 
   // Handle search input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
+    setSearchInput(e.target.value);
   };
 
   // Handle radius input change
   const handleRadiusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRadius(e.target.value);
+    setRadiusInput(e.target.value);
   };
 
   // Handle form submit to fetch farms from API
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      let url = "/api/farms";
-      const input = search.trim();
-      // If input is a 5-digit zip code, search by zip and user radius
-      if (/^\d{5}$/.test(input)) {
-        url += `?zip=${encodeURIComponent(input)}&radius=${encodeURIComponent(radius)}`;
-      } else {
-        // Otherwise, try to split city and state (e.g., "Chico, CA")
-        const parts = input.split(",");
-        if (parts.length === 2) {
-          const city = parts[0].trim();
-          const state = parts[1].trim();
-          url += `?city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}`;
-        } else {
-          setError("Please enter a zip code or 'City, State'.");
-          setLoading(false);
-          return;
-        }
-      }
-      const res = await fetch(url);
-      let farms: Farm[] = [];
-      if (!res.ok) {
-        // Try to get error message from backend
-        const errorJson = await res.json();
-        setError(errorJson.error || "API request failed");
-        setResults([]);
-      } else {
-        const data = await res.json();
-        console.log("API response:", data);
-        farms = Array.isArray(data) ? data : [];
-        setResults(farms);
-      }
-    } catch {
-      setError("Failed to fetch farm data.");
-      setResults([]);
-    }
-    setLoading(false);
+    const next = submit();
+    if (!next) return;
+
+    // If user submits the same params again, force a refetch.
+    await queryClient.invalidateQueries({ queryKey: ["farms-search"] });
   };
 
   return (
@@ -161,7 +122,7 @@ export default function Home() {
                 <div className="flex">
                   <input
                     type="text"
-                    value={search}
+                    value={searchInput}
                     onChange={handleChange}
                     placeholder="Search by city or zip code..."
                     className="flex-1 px-4 py-2 border text-green-400 border-green-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-400"
@@ -180,7 +141,7 @@ export default function Home() {
                     type="number"
                     min="1"
                     max="100"
-                    value={radius}
+                    value={radiusInput}
                     onChange={handleRadiusChange}
                     className="w-20 px-2 py-1 border border-green-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400"
                   />
@@ -210,7 +171,7 @@ export default function Home() {
                     <div className="flex items-center justify-between mt-4">
                       <button
                         type="button"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        onClick={() => setPage((p: number) => Math.max(1, p - 1))}
                         disabled={page <= 1}
                         className={`px-3 py-1 rounded border ${page <= 1 ? "text-gray-400 border-gray-200" : "text-green-700 border-green-300 hover:bg-green-50"}`}
                       >
@@ -219,7 +180,7 @@ export default function Home() {
                       <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
                       <button
                         type="button"
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
                         disabled={page >= totalPages}
                         className={`px-3 py-1 rounded border ${page >= totalPages ? "text-gray-400 border-gray-200" : "text-green-700 border-green-300 hover:bg-green-50"}`}
                       >

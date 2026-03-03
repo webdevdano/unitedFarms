@@ -1,0 +1,41 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/ufa
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dev-secret-change-me
+      # Optional: set these if you want the Express backend behind /api
+      # USE_EXPRESS_BACKEND: "1"
+      # EXPRESS_BACKEND_ORIGIN: http://api:4000
+      # Optional: enable Google Places augmentation
+      # GOOGLE_MAPS_API_KEY: your_key_here
+    depends_on:
+      - mongo
+
+  api:
+    build: .
+    command: ["npm", "run", "server:start"]
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://mongo:27017/ufa
+      NEXTAUTH_SECRET: dev-secret-change-me
+      NEXTAUTH_URL: http://localhost:3000
+      # Optional: enable Google Places augmentation
+      # GOOGLE_MAPS_API_KEY: your_key_here
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:

@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { addFarm as addFarmRequest, type AddFarmInput } from "../../lib/api/farms";
 
 type UiFarm = {
   _id?: string;
@@ -23,6 +25,7 @@ export default function AddFarmModal({
   onCloseAction: () => void;
   onAddedAction: (farm: UiFarm) => void;
 }) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -36,6 +39,25 @@ export default function AddFarmModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const addFarmMutation = useMutation({
+    mutationFn: (input: AddFarmInput) => addFarmRequest(input),
+    onSuccess: async (uiFarm) => {
+      onAddedAction(uiFarm);
+      await queryClient.invalidateQueries({ queryKey: ["user-farms"] });
+      onCloseAction();
+      setForm({
+        name: "",
+        address: "",
+        city: "",
+        state: "",
+        zip: "",
+        phone: "",
+        farmType: "Other",
+        description: "",
+      });
+    },
+  });
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -47,39 +69,15 @@ export default function AddFarmModal({
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/add-farm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to add farm.");
-      }
-      const created = await res.json();
-      // Map created farm to UI shape used by the User-Submitted Farms section
-      const uiFarm: UiFarm = {
-        _id: created._id,
-        MarketName: created.name,
-        Address: created.address,
-        City: created.city,
-        Zip: created.zip,
-        Phone: created.phone || "",
-        FarmType: created.farmType || "Other",
-        Description: created.description || "",
-      };
-  onAddedAction(uiFarm);
-  onCloseAction();
-      // reset form
-      setForm({
-        name: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: "",
-        phone: "",
-        farmType: "Other",
-        description: "",
+      await addFarmMutation.mutateAsync({
+        name: form.name,
+        address: form.address,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        phone: form.phone,
+        farmType: form.farmType,
+        description: form.description,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to add farm.";

@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "../../../lib/mongoose";
 import Farm from "../../../models/Farm";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/auth";
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await dbConnect();
     const data = await request.json();
     const { name, address, city, state, zip, phone, farmType, description } = data;

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "../../../../lib/mongoose";
 import Farm from "../../../../models/Farm";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../../lib/auth";
 
 export async function GET(
   request: Request,
@@ -35,6 +37,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
@@ -74,5 +81,31 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating farm:", error);
     return NextResponse.json({ error: "Failed to update farm." }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+    const { id } = await params;
+
+    const existingFarm = await Farm.findById(id);
+    if (!existingFarm) {
+      return NextResponse.json({ error: "Farm not found" }, { status: 404 });
+    }
+
+    await Farm.findByIdAndDelete(id);
+    return NextResponse.json({ message: "Farm deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting farm:", error);
+    return NextResponse.json({ error: "Failed to delete farm." }, { status: 500 });
   }
 }

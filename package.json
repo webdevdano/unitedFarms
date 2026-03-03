@@ -4,29 +4,50 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "npm run server:dev & npm run dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "server:dev": "tsx watch server/src/index.ts",
+    "server:start": "tsx server/src/index.ts"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",
+    "@tanstack/react-query": "^5.90.21",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
     "mongo": "^0.1.0",
     "mongod": "^2.0.0",
     "mongoose": "^8.19.2",
+    "morgan": "^1.10.1",
     "next": "16.0.0",
     "next-auth": "^4.24.13",
     "node-fetch": "^3.3.2",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/testing-library__jest-dom": "^5.14.9",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

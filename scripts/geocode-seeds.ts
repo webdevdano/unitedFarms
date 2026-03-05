@@ -5,26 +5,37 @@
  */
 
 const addresses = [
-  { name: "Green Valley Farm",          address: "2580 Nord Ave",               city: "Chico",        state: "CA", zip: "95973" },
-  { name: "Central Harvest",            address: "8301 Claribel Rd",            city: "Modesto",      state: "CA", zip: "95357" },
-  { name: "Sunrise Acres",              address: "1200 County Road 29",         city: "Woodland",     state: "CA", zip: "95695" },
-  { name: "Sacramento Valley Organics", address: "9250 Sheldon Rd",             city: "Elk Grove",    state: "CA", zip: "95624" },
-  { name: "Bay Area Fresh",             address: "9000 E Main Ave",             city: "Morgan Hill",  state: "CA", zip: "95037" },
-  { name: "Lone Star Beef Co.",         address: "3414 Lyons Rd",               city: "Austin",       state: "TX", zip: "78702" },
-  { name: "Hill Country Harvest",       address: "131 Racetrack Rd",            city: "Boerne",       state: "TX", zip: "78006" },
-  { name: "Bluebonnet Farms",           address: "26010 Schiel Rd",             city: "Katy",         state: "TX", zip: "77494" },
-  { name: "Hudson Valley Greens",       address: "22 Montgomery St",            city: "Rhinebeck",    state: "NY", zip: "12572" },
-  { name: "Empire State Dairy",         address: "6654 Railroad Ave",           city: "Altamont",     state: "NY", zip: "12009" },
-  { name: "Brooklyn Rooftop Farm",      address: "790 Onderdonk Ave",           city: "Brooklyn",     state: "NY", zip: "11385" },
-  { name: "Sunshine Citrus Farm",       address: "12601 Citrus Grove Blvd",     city: "Clermont",     state: "FL", zip: "34714" },
-  { name: "Everglades Free Range",      address: "24300 SW 162nd Ave",          city: "Homestead",    state: "FL", zip: "33031" },
-  { name: "Rocky Mountain Ranch",       address: "8500 W Deer Creek Canyon Rd", city: "Littleton",    state: "CO", zip: "80128" },
-  { name: "Colorado Organic Acres",     address: "9595 Ute Hwy",                city: "Longmont",     state: "CO", zip: "80504" },
-  { name: "Prairie Wind Farm",          address: "38W748 Boncosky Rd",          city: "Elgin",        state: "IL", zip: "60124" },
-  { name: "Great Lakes Dairy",          address: "1640 Pawnee Rd",              city: "Chatham",      state: "IL", zip: "62629" },
-  { name: "Peach State Farms",          address: "324 Marshallville Rd",        city: "Fort Valley",  state: "GA", zip: "31030" },
-  { name: "Cascade Berry Farm",         address: "7809 Marsh Rd",               city: "Snohomish",    state: "WA", zip: "98290" },
-  { name: "Olympic Valley Ranch",       address: "41404 State Route 7",         city: "Eatonville",   state: "WA", zip: "98328" },
+  // California
+  { name: "Full Belly Farm",                   address: "38375 Road 68",          city: "Guinda",        state: "CA", zip: "95637", produces: ["Vegetables","Fruits","Herbs"],         description: "Certified organic diversified farm in the Capay Valley." },
+  { name: "Frog Hollow Farm",                  address: "100 Modesto Ave",        city: "Brentwood",     state: "CA", zip: "94513", produces: ["Fruits"],                            description: "Award-winning organic stone fruit farm in the East Bay." },
+  { name: "Flying Mule Farm",                  address: "13390 Bell Rd",          city: "Auburn",        state: "CA", zip: "95603", produces: ["Beef","Pork","Lamb"],                 description: "Grass-fed beef and pasture-raised pork in Gold Country." },
+  { name: "Riverdog Farm",                     address: "18820 County Rd 87",     city: "Guinda",        state: "CA", zip: "95637", produces: ["Vegetables","Fruits","Poultry"],      description: "Organic vegetable and fruit farm in the Capay Valley." },
+  // Texas
+  { name: "Boggy Creek Farm",                  address: "3414 Lyons Rd",          city: "Austin",        state: "TX", zip: "78702", produces: ["Vegetables","Herbs","Eggs"],          description: "Historic urban farm in East Austin, open since 1992." },
+  { name: "Johnson's Backyard Garden",         address: "9306 Rogge Ln",          city: "Austin",        state: "TX", zip: "78724", produces: ["Vegetables","Herbs"],                 description: "CSA farm growing over 30 organic vegetable varieties." },
+  // New York
+  { name: "Stone Barns Center",                address: "630 Bedford Rd",         city: "Sleepy Hollow", state: "NY", zip: "10591", produces: ["Vegetables","Beef","Pork","Poultry","Eggs"], description: "Four-season farm and educational center north of NYC." },
+  { name: "Soul Fire Farm",                    address: "40 Wilbur Rd",           city: "Grafton",       state: "NY", zip: "12082", produces: ["Vegetables","Fruits","Herbs"],         description: "Afro-Indigenous centered community farm and reparations project." },
+  { name: "Hearty Roots Community Farm",       address: "3727 NY-9G",             city: "Germantown",    state: "NY", zip: "12526", produces: ["Vegetables","Herbs"],                 description: "Hudson Valley CSA farm delivering to NYC and locally." },
+  // Virginia
+  { name: "Polyface Farm",                     address: "43 Pure Meadows Ln",     city: "Swoope",        state: "VA", zip: "24479", produces: ["Beef","Pork","Poultry","Eggs","Lamb"], description: "Joel Salatin's regenerative farm, featured in The Omnivore's Dilemma." },
+  // Florida
+  { name: "Worden Farm",                       address: "34900 Bermont Rd",       city: "Punta Gorda",   state: "FL", zip: "33982", produces: ["Vegetables","Herbs"],                 description: "Certified organic vegetable farm on Florida's southwest coast." },
+  { name: "Alderman Farms",                    address: "2886 Alderman Rd",       city: "Kissimmee",     state: "FL", zip: "34744", produces: ["Beef","Pork","Poultry"],              description: "Family cattle and livestock farm near Orlando." },
+  // Colorado
+  { name: "Grant Family Farms",                address: "825 E County Rd 56",     city: "Wellington",    state: "CO", zip: "80549", produces: ["Vegetables","Herbs"],                 description: "Colorado's largest organic CSA serving the Front Range." },
+  // Illinois
+  { name: "Kinnikinnick Farm",                 address: "21123 Sycamore Rd",      city: "Caledonia",     state: "IL", zip: "61011", produces: ["Vegetables","Fruits","Herbs"],         description: "Biodynamic farm near Rockford growing over 150 crop varieties." },
+  // Georgia
+  { name: "Crystal Organic Farm",              address: "3880 Campton Rd",        city: "Newborn",       state: "GA", zip: "30056", produces: ["Vegetables","Fruits"],                description: "Certified organic farm east of Atlanta." },
+  // Wisconsin
+  { name: "Harmony Valley Farm",               address: "W7507 Powers Coulee Rd", city: "Viroqua",       state: "WI", zip: "54665", produces: ["Vegetables","Herbs","Fruits"],         description: "Organic CSA farm in the Driftless region of southwest Wisconsin." },
+  // Ohio
+  { name: "Snowville Creamery",                address: "32166 Portersville Rd",  city: "Pomeroy",       state: "OH", zip: "45769", produces: ["Dairy"],                             description: "Grass-fed dairy creamery sourcing from local Ohio farms." },
+  // Washington
+  { name: "Oxbow Farm & Conservation Center",  address: "8514 NE 119th St",       city: "Carnation",     state: "WA", zip: "98014", produces: ["Vegetables","Herbs","Fruits"],         description: "Organic farm in the Snoqualmie River valley." },
+  { name: "Nash's Organic Produce",            address: "1865 E Anderson Rd",     city: "Sequim",        state: "WA", zip: "98382", produces: ["Vegetables","Herbs","Dairy"],          description: "Pioneer organic farm on the Olympic Peninsula since the 1970s." },
+  { name: "Biringer Farm",                     address: "12918 State Ave",        city: "Marysville",    state: "WA", zip: "98271", produces: ["Fruits","Vegetables"],                description: "Pick-your-own berry farm north of Seattle open since 1977." },
 ];
 
 async function geocode(address: string, city: string, state: string, zip: string) {
@@ -37,15 +48,18 @@ async function geocode(address: string, city: string, state: string, zip: string
 }
 
 (async () => {
+  console.log("Geocoding real farms...\n");
   for (const a of addresses) {
     const result = await geocode(a.address, a.city, a.state, a.zip);
     if (result) {
-      console.log(`✓ ${a.name.padEnd(30)} lat: ${result.lat.toFixed(4)}, lng: ${result.lng.toFixed(4)}`);
-      console.log(`  → ${result.display}`);
+      const lat = result.lat.toFixed(4);
+      const lng = result.lng.toFixed(4);
+      console.log(`✓ ${a.name}`);
+      console.log(`  → ${result.display.substring(0, 90)}`);
+      console.log(`  lat: ${lat}  lng: ${lng}\n`);
     } else {
-      console.log(`✗ ${a.name} — NOT FOUND`);
+      console.log(`✗ NOT FOUND: ${a.name} — ${a.address}, ${a.city}, ${a.state}\n`);
     }
-    // Nominatim rate limit: 1 req/sec
     await new Promise(r => setTimeout(r, 1100));
   }
 })();

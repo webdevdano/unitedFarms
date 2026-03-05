@@ -192,7 +192,7 @@ export default function Home() {
               </div>
             </div>
             {/* Right: Map */}
-            <div className="h-96">
+            <div className="h-[420px] min-h-[300px]">
               <ResultsMap
                 markers={useMemo(() => (
                   results

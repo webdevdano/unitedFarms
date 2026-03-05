@@ -44,6 +44,8 @@ export async function GET(request: Request) {
       Phone: farm.phone || "",
       FarmType: farm.farmType,
       Description: farm.description,
+      Lat: typeof farm.lat === "number" ? farm.lat : undefined,
+      Lng: typeof farm.lng === "number" ? farm.lng : undefined,
     }));
 
     // Optionally augment with Google Places results if API key is present
@@ -125,8 +127,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json(merged);
   } catch (error) {
-    console.error("Error searching farms:", error);
-    return NextResponse.json({ error: "Failed to fetch farm data." }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error searching farms:", message);
+    return NextResponse.json(
+      { error: process.env.NODE_ENV === "development" ? `Failed to fetch farm data: ${message}` : "Failed to fetch farm data." },
+      { status: 500 }
+    );
   }
 }
 

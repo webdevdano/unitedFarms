@@ -14,6 +14,8 @@ const FarmSchema = new Schema({
     enum: ['Produce', 'Beef', 'Poultry', 'Dairy', 'All', 'Other'],
     default: 'Other'
   },
+  lat: { type: Number },
+  lng: { type: Number },
   createdAt: { type: Date, default: Date.now },
   verified: { type: Boolean, default: false },
 });

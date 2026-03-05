@@ -10,6 +10,11 @@ Copy the example env file and adjust as needed:
 cp .env.example .env
 ```
 
+Google Maps:
+
+- The map renders via **Leaflet + OpenStreetMap** — no API key required.
+- Set `GOOGLE_MAPS_API_KEY` if you want optional server-side Places/Geocoding augmentation in `/api/farms`.
+
 First, run the development server:
 
 ```bash

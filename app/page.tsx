@@ -26,6 +26,8 @@ export default function Home() {
   const submit = useFarmSearchStore((s) => s.submit);
 
   const [addOpen, setAddOpen] = useState(false);
+  const [focusFarm, setFocusFarm] = useState<{ lat: number; lng: number; title?: string; seq: number } | null>(null);
+  const [producesFilter, setProducesFilter] = useState<string>("");
 
   const handleFarmAdded = (farm: Farm) => {
     queryClient.setQueryData<Farm[]>(["user-farms"], (prev) => {
@@ -54,12 +56,25 @@ export default function Home() {
   const userFarms = userFarmsQuery.data ?? [];
   const userFarmsLoading = userFarmsQuery.isLoading;
 
+  const mapMarkers = useMemo(() =>
+    results
+      .filter((f) => typeof f.Lat === "number" && typeof f.Lng === "number")
+      .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName })),
+  [results]);
+
+  const filteredResults = useMemo(() => {
+    if (!producesFilter) return results;
+    return results.filter((f) =>
+      Array.isArray(f.Produces) && f.Produces.some((p) => p.toLowerCase() === producesFilter.toLowerCase())
+    );
+  }, [results, producesFilter]);
+
   const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(results.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(filteredResults.length / pageSize));
   const pageResults = useMemo(() => {
     const start = (page - 1) * pageSize;
-    return results.slice(start, start + pageSize);
-  }, [results, page]);
+    return filteredResults.slice(start, start + pageSize);
+  }, [filteredResults, page]);
 
   // Handle search input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +91,8 @@ export default function Home() {
     e.preventDefault();
     const next = submit();
     if (!next) return;
-
-    // If user submits the same params again, force a refetch.
+    setFocusFarm(null);
+    setProducesFilter("");
     await queryClient.invalidateQueries({ queryKey: ["farms-search"] });
   };
 
@@ -147,11 +162,30 @@ export default function Home() {
                   />
                 </div>
               </form>
+              {results.length > 0 && (
+                <div className="mb-3 flex items-center gap-2">
+                  <label className="text-sm text-green-700 font-medium">Filter by:</label>
+                  <select
+                    value={producesFilter}
+                    onChange={(e) => { setProducesFilter(e.target.value); setPage(1); }}
+                    className="text-sm border border-green-300 rounded px-2 py-1 text-green-700 focus:outline-none focus:ring-2 focus:ring-green-400"
+                  >
+                    <option value="">All</option>
+                    {["Vegetables","Fruits","Herbs","Beef","Pork","Poultry","Lamb","Dairy","Eggs","Honey","Flowers","Other"].map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="w-full">
                 {loading ? (
                   <div className="bg-white shadow rounded p-6 text-center text-gray-500">Loading...</div>
                 ) : error ? (
                   <div className="bg-white shadow rounded p-6 text-center text-red-500">{error}</div>
+                ) : filteredResults.length === 0 && results.length > 0 ? (
+                  <div className="bg-white shadow rounded p-6 text-center text-gray-500">
+                    No farms match that filter.
+                  </div>
                 ) : results.length === 0 ? (
                   <div className="bg-white shadow rounded p-6 text-center text-gray-500">
                     No farms found. Please search to see results.
@@ -160,11 +194,30 @@ export default function Home() {
                   <>
                     <ul className="space-y-4">
                       {pageResults.map((farm) => (
-                        <li key={farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                        <li
+                          key={farm.MarketName + farm.Zip}
+                          className={`bg-green-50 border rounded p-4 shadow cursor-pointer transition-colors ${
+                            focusFarm?.title === farm.MarketName
+                              ? "border-green-500 ring-2 ring-green-400"
+                              : "border-green-200 hover:border-green-400"
+                          }`}
+                          onClick={() => {
+                            if (typeof farm.Lat === "number" && typeof farm.Lng === "number") {
+                              setFocusFarm((prev) => ({ lat: farm.Lat as number, lng: farm.Lng as number, title: farm.MarketName, seq: (prev?.seq ?? 0) + 1 }));
+                            }
+                          }}
+                        >
                           <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
-                          <p className="text-gray-700">{farm.Address}</p>
-                          <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
-                          <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                          <p className="text-gray-700 text-sm">{farm.Address}</p>
+                          <p className="text-gray-600 text-sm">{farm.City}{farm.State ? `, ${farm.State}` : ""} {farm.Zip}</p>
+                          {Array.isArray(farm.Produces) && farm.Produces.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {farm.Produces.map((p) => (
+                                <span key={p} className="text-xs bg-green-100 text-green-800 rounded-full px-2 py-0.5">{p}</span>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-gray-500 text-xs mt-1">Contact: {farm.Phone || "N/A"}</p>
                         </li>
                       ))}
                     </ul>
@@ -177,7 +230,7 @@ export default function Home() {
                       >
                         Previous
                       </button>
-                      <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                      <span className="text-sm text-gray-600">Page {page} of {totalPages} ({filteredResults.length} result{filteredResults.length !== 1 ? "s" : ""})</span>
                       <button
                         type="button"
                         onClick={() => setPage((p: number) => Math.min(totalPages, p + 1))}
@@ -194,11 +247,8 @@ export default function Home() {
             {/* Right: Map */}
             <div className="h-[420px] min-h-[300px]">
               <ResultsMap
-                markers={useMemo(() => (
-                  results
-                    .filter((f) => typeof f.Lat === 'number' && typeof f.Lng === 'number')
-                    .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName }))
-                ), [results])}
+                markers={mapMarkers}
+                focusMarker={focusFarm}
               />
             </div>
           </div>
@@ -230,12 +280,18 @@ export default function Home() {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
-                        <p className="text-sm text-green-600 font-medium">{farm.FarmType}</p>
-                        <p className="text-gray-700">{farm.Address}</p>
-                        <p className="text-gray-600">City: {farm.City} | Zip: {farm.Zip}</p>
-                        <p className="text-gray-600">Contact: {farm.Phone || "N/A"}</p>
+                        {Array.isArray(farm.Produces) && farm.Produces.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                            {farm.Produces.map((p) => (
+                              <span key={p} className="text-xs bg-green-100 text-green-800 rounded-full px-2 py-0.5">{p}</span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-gray-700 text-sm">{farm.Address}</p>
+                        <p className="text-gray-600 text-sm">{farm.City}{farm.State ? `, ${farm.State}` : ""} {farm.Zip}</p>
+                        <p className="text-gray-600 text-sm">Contact: {farm.Phone || "N/A"}</p>
                         {farm.Description && (
-                          <p className="text-gray-600 mt-2 italic">{farm.Description}</p>
+                          <p className="text-gray-600 mt-2 italic text-sm">{farm.Description}</p>
                         )}
                       </div>
                       <a

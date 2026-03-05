@@ -33,7 +33,7 @@ export default function AddFarmModal({
     state: "",
     zip: "",
     phone: "",
-    farmType: "Other",
+    produces: [] as string[],
     description: "",
   });
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ export default function AddFarmModal({
         state: "",
         zip: "",
         phone: "",
-        farmType: "Other",
+        produces: [],
         description: "",
       });
     },
@@ -62,6 +62,15 @@ export default function AddFarmModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleProducesChange = (item: string) => {
+    setForm((prev) => ({
+      ...prev,
+      produces: prev.produces.includes(item)
+        ? prev.produces.filter((p) => p !== item)
+        : [...prev.produces, item],
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,7 +85,7 @@ export default function AddFarmModal({
         state: form.state,
         zip: form.zip,
         phone: form.phone,
-        farmType: form.farmType,
+        produces: form.produces,
         description: form.description,
       });
     } catch (err) {
@@ -114,17 +123,25 @@ export default function AddFarmModal({
           <input name="address" value={form.address} onChange={handleChange} required placeholder="Address" className="w-full text-green-600 border px-3 py-2 rounded" />
           <input name="city" value={form.city} onChange={handleChange} required placeholder="City" className="w-full text-green-600 border px-3 py-2 rounded" />
           <div className="flex gap-2">
-            <input name="state" value={form.state} onChange={handleChange} required placeholder="State" className="w-full text-green-600 border px-3 py-2 rounded" />
+            <input name="state" value={form.state} onChange={handleChange} required placeholder="State (e.g. CA)" className="w-full text-green-600 border px-3 py-2 rounded" />
             <input name="zip" value={form.zip} onChange={handleChange} required placeholder="Zip Code" className="w-full text-green-600 border px-3 py-2 rounded" />
           </div>
-          <select name="farmType" value={form.farmType} onChange={handleChange} required className="w-full text-green-600 border px-3 py-2 rounded">
-            <option value="Produce">Produce</option>
-            <option value="Beef">Beef</option>
-            <option value="Poultry">Poultry</option>
-            <option value="Dairy">Dairy</option>
-            <option value="All">All</option>
-            <option value="Other">Other</option>
-          </select>
+          <div>
+            <p className="text-sm font-medium text-green-700 mb-1">What is sold? <span className="text-gray-400 font-normal">(select all that apply)</span></p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              {["Vegetables","Fruits","Herbs","Beef","Pork","Poultry","Lamb","Dairy","Eggs","Honey","Flowers","Other"].map((item) => (
+                <label key={item} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.produces.includes(item)}
+                    onChange={() => handleProducesChange(item)}
+                    className="accent-green-600"
+                  />
+                  {item}
+                </label>
+              ))}
+            </div>
+          </div>
           <input name="phone" value={form.phone} onChange={handleChange} placeholder="Phone (optional)" className="w-full text-green-600 border px-3 py-2 rounded" />
           <textarea 
             name="description" 

@@ -8,12 +8,7 @@ const FarmSchema = new Schema({
   zip: { type: String, required: true },
   phone: { type: String },
   description: { type: String, maxlength: 1000 },
-  farmType: { 
-    type: String, 
-    required: true, 
-    enum: ['Produce', 'Beef', 'Poultry', 'Dairy', 'All', 'Other'],
-    default: 'Other'
-  },
+  produces: { type: [String], default: [] },
   lat: { type: Number },
   lng: { type: Number },
   createdAt: { type: Date, default: Date.now },

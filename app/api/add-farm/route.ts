@@ -13,22 +13,21 @@ export async function POST(request: Request) {
 
     await dbConnect();
     const data = await request.json();
-    const { name, address, city, state, zip, phone, farmType, description } = data;
-    if (!name || !address || !city || !state || !zip || !farmType) {
+    const { name, address, city, state, zip, phone, produces, description } = data;
+    if (!name || !address || !city || !state || !zip) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
-    // Create farm data object, only including non-empty optional fields
-    const farmData: { [key: string]: string } = {
+    const farmData: Record<string, unknown> = {
       name,
       address,
       city,
       state,
       zip,
-      farmType,
+      produces: Array.isArray(produces) ? produces : [],
     };
 
-    if (phone && phone.trim()) farmData.phone = phone.trim();
-    if (description && description.trim()) farmData.description = description.trim();
+    if (phone && String(phone).trim()) farmData.phone = String(phone).trim();
+    if (description && String(description).trim()) farmData.description = String(description).trim();
 
     const farm = await Farm.create(farmData);
     return NextResponse.json(farm, { status: 201 });

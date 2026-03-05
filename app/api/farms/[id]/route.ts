@@ -23,7 +23,7 @@ export async function GET(
       state: farm.state,
       zip: farm.zip,
       phone: farm.phone,
-      farmType: farm.farmType,
+      produces: Array.isArray(farm.produces) ? farm.produces : [],
       description: farm.description,
     });
   } catch (error) {
@@ -45,9 +45,9 @@ export async function PUT(
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
-    const { name, address, city, state, zip, phone, farmType, description } = body;
+    const { name, address, city, state, zip, phone, produces, description } = body;
 
-    if (!name || !address || !city || !state || !zip || !farmType) {
+    if (!name || !address || !city || !state || !zip) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -57,18 +57,17 @@ export async function PUT(
       return NextResponse.json({ error: "Farm not found" }, { status: 404 });
     }
 
-    // Create update data object, only including non-empty optional fields
-    const updateData: { [key: string]: string } = {
+    const updateData: Record<string, unknown> = {
       name,
       address,
       city,
       state,
       zip,
-      farmType,
+      produces: Array.isArray(produces) ? produces : [],
     };
 
-    if (phone && phone.trim()) updateData.phone = phone.trim();
-    if (description && description.trim()) updateData.description = description.trim();
+    if (phone && String(phone).trim()) updateData.phone = String(phone).trim();
+    if (description && String(description).trim()) updateData.description = String(description).trim();
 
     // Update the farm
     await Farm.findByIdAndUpdate(

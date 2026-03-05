@@ -5,9 +5,10 @@ export type UiFarm = {
   MarketName: string;
   Address: string;
   City: string;
+  State?: string;
   Zip: string;
   Phone?: string;
-  FarmType?: string;
+  Produces?: string[];
   Description?: string;
   Lat?: number;
   Lng?: number;
@@ -20,7 +21,7 @@ export type AddFarmInput = {
   state: string;
   zip: string;
   phone?: string;
-  farmType: string;
+  produces: string[];
   description?: string;
 };
 
@@ -77,9 +78,10 @@ export async function addFarm(input: AddFarmInput): Promise<UiFarm> {
     MarketName: getString("name"),
     Address: getString("address"),
     City: getString("city"),
+    State: getString("state"),
     Zip: getString("zip"),
     Phone: getString("phone"),
-    FarmType: getString("farmType") || "Other",
+    Produces: Array.isArray(createdRecord["produces"]) ? (createdRecord["produces"] as string[]) : [],
     Description: getString("description"),
   };
 }

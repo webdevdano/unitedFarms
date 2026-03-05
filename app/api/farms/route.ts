@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       query.state = { $regex: new RegExp(`^${escapeRegex(state)}$`, "i") };
     }
 
-    const farms = await Farm.find(query).sort({ createdAt: -1 }).limit(200);
+    const farms = await Farm.find(query).sort({ createdAt: -1 }).limit(200).lean();
 
     const dbFormatted = farms.map((farm) => ({
       _id: farm._id.toString(),

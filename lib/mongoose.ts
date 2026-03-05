@@ -35,7 +35,7 @@ export async function dbConnect() {
   if (cached.conn) return cached.conn;
   if (!cached.promise) {
     cached.promise = mongoose
-      .connect(MONGODB_URI)
+      .connect(MONGODB_URI, { dbName: "ufa" })
       .then((m) => m)
       .catch((err) => {
         // Reset so future requests retry rather than using a cached rejection.

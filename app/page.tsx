@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import dynamic from "next/dynamic";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchFarms, fetchUserFarms, type UiFarm } from "../lib/api/farms";
+import { focusMapOn } from "../lib/mapBridge";
 import { useFarmSearchStore } from "../lib/store/useFarmSearchStore";
 
 const ResultsMap = dynamic(() => import("./components/ResultsMap"), { ssr: false });
@@ -26,7 +27,7 @@ export default function Home() {
   const submit = useFarmSearchStore((s) => s.submit);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [focusFarm, setFocusFarm] = useState<{ lat: number; lng: number; title?: string; seq: number } | null>(null);
+  const [selectedFarmKey, setSelectedFarmKey] = useState<string | null>(null);
   const [producesFilter, setProducesFilter] = useState<string>("");
 
   const handleFarmAdded = (farm: Farm) => {
@@ -91,7 +92,7 @@ export default function Home() {
     e.preventDefault();
     const next = submit();
     if (!next) return;
-    setFocusFarm(null);
+    setSelectedFarmKey(null);
     setProducesFilter("");
     await queryClient.invalidateQueries({ queryKey: ["farms-search"] });
   };
@@ -197,13 +198,17 @@ export default function Home() {
                         <li
                           key={farm.MarketName + farm.Zip}
                           className={`bg-green-50 border rounded p-4 shadow cursor-pointer transition-colors ${
-                            focusFarm?.title === farm.MarketName
+                            selectedFarmKey === farm.MarketName + farm.Zip
                               ? "border-green-500 ring-2 ring-green-400"
                               : "border-green-200 hover:border-green-400"
                           }`}
                           onClick={() => {
+                            console.log("[page] card clicked", farm.MarketName, "Lat:", farm.Lat, "Lng:", farm.Lng);
                             if (typeof farm.Lat === "number" && typeof farm.Lng === "number") {
-                              setFocusFarm((prev) => ({ lat: farm.Lat as number, lng: farm.Lng as number, title: farm.MarketName, seq: (prev?.seq ?? 0) + 1 }));
+                              setSelectedFarmKey(farm.MarketName + farm.Zip);
+                              focusMapOn(farm.Lat, farm.Lng, farm.MarketName);
+                            } else {
+                              console.warn("[page] farm has no coordinates", farm);
                             }
                           }}
                         >
@@ -246,10 +251,7 @@ export default function Home() {
             </div>
             {/* Right: Map */}
             <div className="h-[420px] min-h-[300px]">
-              <ResultsMap
-                markers={mapMarkers}
-                focusMarker={focusFarm}
-              />
+              <ResultsMap markers={mapMarkers} />
             </div>
           </div>
         </section>

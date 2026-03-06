@@ -1,8 +1,16 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { Types } from "mongoose";
 import { dbConnect } from "./mongoose";
 import User from "../models/User";
+
+type LeanUser = {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+};
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -17,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         await dbConnect();
-        const user = await User.findOne({ email: credentials.email.toLowerCase().trim() }).lean();
+        const user = await User.findOne({ email: credentials.email.toLowerCase().trim() }).lean<LeanUser>();
         if (!user) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.password as string);

@@ -1,29 +1,22 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/auth";
 import { dbConnect } from "../../../lib/mongoose";
 import Farm from "../../../models/Farm";
-
-async function geocodeAddress(
-  address: string,
-  city: string,
-  state: string,
-  zip: string
-): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const q = encodeURIComponent(`${address}, ${city}, ${state} ${zip}, USA`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`;
-    const res = await fetch(url, { headers: { "User-Agent": "UFA-app/1.0" } });
-    const json = (await res.json()) as Array<{ lat: string; lon: string }>;
-    if (!json.length) return null;
-    return { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
-  } catch {
-    return null;
-  }
-}
+import { geocodeFarm } from "../../../lib/geocode";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+
     await dbConnect();
-    const farms = await Farm.find({}).sort({ createdAt: -1 }).lean();
+
+    // If logged in, show only this user's farms; otherwise show all anonymous farms
+    const query = session?.user?.id
+      ? { createdBy: session.user.id }
+      : { createdBy: null };
+
+    const farms = await Farm.find(query).sort({ createdAt: -1 }).lean();
 
     // Retroactively geocode farms missing coordinates — sequential to respect
     // Nominatim's 1-request/second rate limit.
@@ -33,7 +26,7 @@ export async function GET() {
         resolved.push(farm);
         continue;
       }
-      const coords = await geocodeAddress(farm.address, farm.city, farm.state, farm.zip);
+      const coords = await geocodeFarm(farm.address, farm.city, farm.state, farm.zip);
       if (!coords) {
         resolved.push(farm);
         continue;
@@ -41,8 +34,6 @@ export async function GET() {
       // Persist so we don't re-geocode next time
       await Farm.updateOne({ _id: farm._id }, { $set: { lat: coords.lat, lng: coords.lng } });
       resolved.push({ ...farm, lat: coords.lat, lng: coords.lng });
-      // Respect Nominatim rate limit between sequential requests
-      await new Promise((r) => setTimeout(r, 1100));
     }
 
     const formattedFarms = resolved.map((farm) => ({

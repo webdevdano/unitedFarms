@@ -55,9 +55,12 @@ export default function LoginPage() {
           {loading ? "Logging in..." : "Login"}
         </button>
         {error && <div className="text-red-600 text-center">{error}</div>}
-        <div className="text-center text-sm text-gray-600">
-          Demo: Use any email and password to login.
-        </div>
+        <p className="text-center text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <a href="/register" className="text-green-700 font-medium hover:underline">
+            Sign up
+          </a>
+        </p>
       </form>
     </div>
   );

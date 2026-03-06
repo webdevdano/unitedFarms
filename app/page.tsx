@@ -127,19 +127,32 @@ export default function Home() {
               ))}
               <li className="ml-2">
                 {session ? (
-                  <button
-                    onClick={() => signOut()}
-                    className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm backdrop-blur-sm"
-                  >
-                    Logout
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-green-800 font-medium hidden sm:block">
+                      👋 {session.user?.name?.split(" ")[0]}
+                    </span>
+                    <button
+                      onClick={() => signOut()}
+                      className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 ) : (
-                  <a
-                    href="/login"
-                    className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm backdrop-blur-sm"
-                  >
-                    Login
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="/login"
+                      className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm"
+                    >
+                      Login
+                    </a>
+                    <a
+                      href="/register"
+                      className="px-4 py-1.5 rounded-full bg-green-700 text-white hover:bg-green-600 transition-all duration-200 font-semibold text-sm"
+                    >
+                      Sign Up
+                    </a>
+                  </div>
                 )}
               </li>
             </ul>

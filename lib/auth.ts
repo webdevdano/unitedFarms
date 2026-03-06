@@ -1,5 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import { dbConnect } from "./mongoose";
+import User from "../models/User";
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -11,20 +14,33 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // For demo purposes, accept any email/password
-        if (credentials?.email && credentials?.password) {
-          return {
-            id: "1",
-            email: credentials.email,
-            name: "Demo User",
-          };
-        }
-        return null;
+        if (!credentials?.email || !credentials?.password) return null;
+
+        await dbConnect();
+        const user = await User.findOne({ email: credentials.email.toLowerCase().trim() }).lean();
+        if (!user) return null;
+
+        const valid = await bcrypt.compare(credentials.password, user.password as string);
+        if (!valid) return null;
+
+        return {
+          id: String(user._id),
+          email: user.email as string,
+          name: user.name as string,
+        };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
+  session: { strategy: "jwt" },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) token.id = user.id;
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) session.user.id = token.id as string;
+      return session;
+    },
   },
   pages: {
     signIn: "/login",

@@ -1,27 +1,14 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../lib/auth";
 import { dbConnect } from "../../../lib/mongoose";
 import Farm from "../../../models/Farm";
-
-async function geocodeAddress(
-  address: string,
-  city: string,
-  state: string,
-  zip: string
-): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const q = encodeURIComponent(`${address}, ${city}, ${state} ${zip}, USA`);
-    const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`;
-    const res = await fetch(url, { headers: { "User-Agent": "UFA-app/1.0" } });
-    const json = (await res.json()) as Array<{ lat: string; lon: string }>;
-    if (!json.length) return null;
-    return { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
-  } catch {
-    return null;
-  }
-}
+import { geocodeFarm } from "../../../lib/geocode";
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
     await dbConnect();
     const data = await request.json();
     const { name, address, city, state, zip, phone, produces, description } = data;
@@ -29,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
-    const coords = await geocodeAddress(address, city, state, zip);
+    const coords = await geocodeFarm(address, city, state, zip);
 
     const farmData: Record<string, unknown> = {
       name,
@@ -38,6 +25,7 @@ export async function POST(request: Request) {
       state,
       zip,
       produces: Array.isArray(produces) ? produces : [],
+      createdBy: session?.user?.id ?? null,
     };
 
     if (coords) {

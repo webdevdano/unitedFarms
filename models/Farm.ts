@@ -11,6 +11,7 @@ const FarmSchema = new Schema({
   produces: { type: [String], default: [] },
   lat: { type: Number },
   lng: { type: Number },
+  createdBy: { type: String, default: null }, // user _id string, null = anonymous
   createdAt: { type: Date, default: Date.now },
   verified: { type: Boolean, default: false },
 });

@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import { dbConnect } from "../../../lib/mongoose";
 import Farm from "../../../models/Farm";
+
+type LeanFarm = {
+  _id: Types.ObjectId;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone?: string;
+  description?: string;
+  produces: string[];
+  lat?: number;
+  lng?: number;
+  createdBy?: string | null;
+};
 
 // Local DB-backed search since the external USDA API is unreliable.
 // Supports queries by either:
@@ -33,7 +49,7 @@ export async function GET(request: Request) {
       query.state = { $regex: new RegExp(`^${escapeRegex(state)}$`, "i") };
     }
 
-    const farms = await Farm.find(query).sort({ createdAt: -1 }).limit(200).lean();
+    const farms = await Farm.find(query).sort({ createdAt: -1 }).limit(200).lean<LeanFarm[]>();
 
     const dbFormatted = farms.map((farm) => ({
       _id: farm._id.toString(),

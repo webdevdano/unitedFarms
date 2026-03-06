@@ -112,9 +112,8 @@ export default function Home() {
           <nav>
             <ul className="flex items-center gap-1 text-sm font-medium">
               {[
-                { label: "Home", href: "#" },
-                { label: "About", href: "#" },
-                { label: "Contact", href: "#" },
+                { label: "Home", href: "/" },
+                { label: "About", href: "/about" },
               ].map(({ label, href }) => (
                 <li key={label}>
                   <a

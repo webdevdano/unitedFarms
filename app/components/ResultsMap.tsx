@@ -73,6 +73,8 @@ export default function ResultsMap({
       const popup = popupRef.current;
       if (!m) { console.warn("[ResultsMap] map not ready"); return; }
 
+      m.invalidateSize();
+
       markersRef.current.forEach((marker) => {
         const pos = marker.getLatLng();
         const hit = Math.abs(pos.lat - lat) < 0.00001 && Math.abs(pos.lng - lng) < 0.00001;

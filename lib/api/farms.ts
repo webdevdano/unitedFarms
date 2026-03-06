@@ -73,6 +73,9 @@ export async function addFarm(input: AddFarmInput): Promise<UiFarm> {
   const getString = (key: string) => (typeof createdRecord[key] === "string" ? (createdRecord[key] as string) : "");
 
   // Map created farm to UI shape expected by lists
+  const getNumber = (key: string) =>
+    typeof createdRecord[key] === "number" ? (createdRecord[key] as number) : undefined;
+
   return {
     _id: getString("_id"),
     MarketName: getString("name"),
@@ -83,5 +86,7 @@ export async function addFarm(input: AddFarmInput): Promise<UiFarm> {
     Phone: getString("phone"),
     Produces: Array.isArray(createdRecord["produces"]) ? (createdRecord["produces"] as string[]) : [],
     Description: getString("description"),
+    Lat: getNumber("lat"),
+    Lng: getNumber("lng"),
   };
 }

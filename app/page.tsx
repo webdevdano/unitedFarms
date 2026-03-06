@@ -10,8 +10,6 @@ import { useFarmSearchStore } from "../lib/store/useFarmSearchStore";
 const ResultsMap = dynamic(() => import("./components/ResultsMap"), { ssr: false });
 const AddFarmModal = dynamic(() => import("./components/AddFarmModal"), { ssr: false });
 
-type Farm = UiFarm;
-
 export default function Home() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -30,22 +28,20 @@ export default function Home() {
   const [selectedFarmKey, setSelectedFarmKey] = useState<string | null>(null);
   const [producesFilter, setProducesFilter] = useState<string>("");
 
-  const handleFarmAdded = (farm: Farm) => {
-    queryClient.setQueryData<Farm[]>(["user-farms"], (prev) => {
-      const list = Array.isArray(prev) ? prev : [];
-      return [farm, ...list];
-    });
+  const handleFarmAdded = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["user-farms"] });
   };
 
   const userFarmsQuery = useQuery({
     queryKey: ["user-farms"],
     queryFn: fetchUserFarms,
+    staleTime: 30_000,
   });
 
   const farmsQuery = useQuery({
     queryKey: ["farms-search", submitted],
     queryFn: () => {
-      if (!submitted) return Promise.resolve([] as Farm[]);
+      if (!submitted) return Promise.resolve([] as UiFarm[]);
       return fetchFarms(submitted);
     },
     enabled: !!submitted,
@@ -54,19 +50,23 @@ export default function Home() {
   const results = useMemo(() => farmsQuery.data ?? [], [farmsQuery.data]);
   const loading = farmsQuery.isFetching;
   const error = validationError || (farmsQuery.error instanceof Error ? farmsQuery.error.message : "");
-  const userFarms = userFarmsQuery.data ?? [];
+  const userFarms = useMemo(() => userFarmsQuery.data ?? [], [userFarmsQuery.data]);
   const userFarmsLoading = userFarmsQuery.isLoading;
 
-  const mapMarkers = useMemo(() =>
-    results
+  const mapMarkers = useMemo(() => {
+    const searchMarkers = results
       .filter((f) => typeof f.Lat === "number" && typeof f.Lng === "number")
-      .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName })),
-  [results]);
+      .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName }));
+    const userMarkers = userFarms
+      .filter((f) => typeof f.Lat === "number" && typeof f.Lng === "number")
+      .map((f) => ({ lat: f.Lat as number, lng: f.Lng as number, title: f.MarketName }));
+    return [...searchMarkers, ...userMarkers];
+  }, [results, userFarms]);
 
   const filteredResults = useMemo(() => {
     if (!producesFilter) return results;
     return results.filter((f) =>
-      Array.isArray(f.Produces) && f.Produces.some((p) => p.toLowerCase() === producesFilter.toLowerCase())
+      Array.isArray(f.Produces) && f.Produces.some((p: string) => p.toLowerCase() === producesFilter.toLowerCase())
     );
   }, [results, producesFilter]);
 
@@ -99,30 +99,50 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-green-100 via-amber-50 to-blue-100 font-sans">
-      <header className="w-full bg-green-300 text-white py-4 shadow">
-        <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-wide">United Farms of America</h1>
+      <header className="w-full sticky top-0 z-40 bg-white/30 backdrop-blur-md text-green-900 border-b border-white/40 shadow-sm">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Brand */}
+          <a href="#" className="flex items-center gap-2 group">
+            <span className="text-2xl select-none">🌾</span>
+            <span className="text-lg font-bold tracking-tight text-green-900 group-hover:text-green-600 transition-colors duration-200">
+              United Farms of America
+            </span>
+          </a>
+          {/* Nav */}
           <nav>
-            <ul className="flex gap-6 text-lg">
-              <li><a href="#" className="hover:text-amber-200">Home</a></li>
-              <li><a href="#" className="hover:text-amber-200">About</a></li>
-              <li><a href="#" className="hover:text-amber-200">Contact</a></li>
-              {session ? (
-                <li>
+            <ul className="flex items-center gap-1 text-sm font-medium">
+              {[
+                { label: "Home", href: "#" },
+                { label: "About", href: "#" },
+                { label: "Contact", href: "#" },
+              ].map(({ label, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    className="relative px-4 py-2 rounded-md text-green-900 hover:text-green-700 hover:bg-white/50 transition-all duration-200 group"
+                  >
+                    {label}
+                    <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-green-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left rounded-full" />
+                  </a>
+                </li>
+              ))}
+              <li className="ml-2">
+                {session ? (
                   <button
                     onClick={() => signOut()}
-                    className="hover:text-amber-200"
+                    className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm backdrop-blur-sm"
                   >
                     Logout
                   </button>
-                </li>
-              ) : (
-                <li>
-                  <a href="/login" className="hover:text-amber-200">
+                ) : (
+                  <a
+                    href="/login"
+                    className="px-4 py-1.5 rounded-full border border-green-700 text-green-800 hover:bg-green-700 hover:text-white transition-all duration-200 font-semibold text-sm backdrop-blur-sm"
+                  >
                     Login
                   </a>
-                </li>
-              )}
+                )}
+              </li>
             </ul>
           </nav>
         </div>
@@ -217,7 +237,7 @@ export default function Home() {
                           <p className="text-gray-600 text-sm">{farm.City}{farm.State ? `, ${farm.State}` : ""} {farm.Zip}</p>
                           {Array.isArray(farm.Produces) && farm.Produces.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {farm.Produces.map((p) => (
+                              {farm.Produces.map((p: string) => (
                                 <span key={p} className="text-xs bg-green-100 text-green-800 rounded-full px-2 py-0.5">{p}</span>
                               ))}
                             </div>
@@ -278,7 +298,20 @@ export default function Home() {
             ) : (
               <ul className="space-y-4">
                 {userFarms.map((farm) => (
-                  <li key={farm._id || farm.MarketName + farm.Zip} className="bg-green-50 border border-green-200 rounded p-4 shadow">
+                  <li
+                    key={farm._id || farm.MarketName + farm.Zip}
+                    className={`bg-green-50 border rounded p-4 shadow transition-colors ${
+                      typeof farm.Lat === "number" && typeof farm.Lng === "number"
+                        ? "cursor-pointer border-green-200 hover:border-green-400"
+                        : "border-green-200"
+                    }`}
+                    onClick={() => {
+                      if (typeof farm.Lat === "number" && typeof farm.Lng === "number") {
+                        window.scrollTo({ top: 0, behavior: "instant" });
+                        focusMapOn(farm.Lat, farm.Lng, farm.MarketName);
+                      }
+                    }}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="text-xl font-semibold text-green-700">{farm.MarketName}</h3>
@@ -313,7 +346,7 @@ export default function Home() {
       <AddFarmModal
         open={addOpen}
         onCloseAction={() => setAddOpen(false)}
-        onAddedAction={(f) => handleFarmAdded(f as Farm)}
+        onAddedAction={handleFarmAdded}
       />
     </div>
   );

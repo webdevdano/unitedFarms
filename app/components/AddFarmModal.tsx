@@ -1,20 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { addFarm as addFarmRequest, type AddFarmInput } from "../../lib/api/farms";
-
-type UiFarm = {
-  _id?: string;
-  MarketName: string;
-  Address: string;
-  City: string;
-  Zip: string;
-  Phone?: string;
-  FarmType?: string;
-  Description?: string;
-  Lat?: number;
-  Lng?: number;
-};
 
 export default function AddFarmModal({
   open,
@@ -23,9 +10,8 @@ export default function AddFarmModal({
 }: {
   open: boolean;
   onCloseAction: () => void;
-  onAddedAction: (farm: UiFarm) => void;
+  onAddedAction: () => Promise<void>;
 }) {
-  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -41,9 +27,8 @@ export default function AddFarmModal({
 
   const addFarmMutation = useMutation({
     mutationFn: (input: AddFarmInput) => addFarmRequest(input),
-    onSuccess: async (uiFarm) => {
-      onAddedAction(uiFarm);
-      await queryClient.invalidateQueries({ queryKey: ["user-farms"] });
+    onSuccess: async () => {
+      await onAddedAction();
       onCloseAction();
       setForm({
         name: "",
